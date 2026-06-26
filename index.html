@@ -147,6 +147,44 @@
       background: var(--accent-hover);
     }
 
+    .btn-sold-out {
+      background: #2e2e2e;
+      color: var(--text-muted);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-sold-out:hover {
+      background: #2e2e2e;
+    }
+
+    .sold-out-text {
+      max-width: 520px;
+      margin-top: 1.25rem;
+      font-size: 0.9375rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .waitlist-link {
+      display: inline-block;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--text);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.15s ease;
+    }
+
+    .waitlist-link:hover {
+      color: var(--accent);
+    }
+
+    #sold-out-block[hidden],
+    #booking-open[hidden] {
+      display: none !important;
+    }
+
     /* Launch promo */
     .promo-bar {
       background: var(--bg-card);
@@ -588,6 +626,15 @@
         margin-right: auto;
       }
 
+      .sold-out-text {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #sold-out-block {
+        text-align: center;
+      }
+
       #how-it-works .section-label,
       #how-it-works h2,
       #how-it-works .section-intro,
@@ -640,10 +687,11 @@
 
   <!--
     CUSTOMIZE:
-    1. STRIPE_URL — your Stripe payment link (edit CONFIG below)
-    2. PROMO — set active: false when the launch offer ends
-    3. Enable "Promotion codes" on your Stripe Payment Link
-    4. CONTACT_EMAIL — your contact email (edit CONFIG below)
+    1. BOOKING.open — set true to enable purchases, false for sold out
+    2. BOOKING.waitlistUrl — Google Form for reopen notifications
+    3. STRIPE_URL — your Stripe payment link (edit CONFIG below)
+    4. PROMO — set active: false when the launch offer ends
+    5. CONTACT_EMAIL — your contact email (edit CONFIG below)
   -->
 
   <header>
@@ -679,9 +727,16 @@
         <p class="hero-label">YouTube Growth Consulting</p>
         <h1>Actionable feedback on your channel to help you grow.</h1>
         <p class="hero-desc">I personally review your YouTube channel and record a 10–20 minute video with specific, honest feedback you can act on immediately.</p>
-        <a href="#" class="btn" data-stripe>Book Your Audit</a>
-        <p class="hero-trust">10–20 min private video · Delivered within 5 business days</p>
-        <p class="hero-trust" id="hero-promo-note" hidden>Apply code <span class="promo-code" data-promo-code></span> on the Stripe checkout page</p>
+        <div id="booking-open">
+          <a href="#" class="btn" data-stripe>Book Your Audit</a>
+          <p class="hero-trust">10–20 min private video · Delivered within 5 business days</p>
+          <p class="hero-trust" id="hero-promo-note" hidden>Apply code <span class="promo-code" data-promo-code></span> on the Stripe checkout page</p>
+        </div>
+        <div id="sold-out-block" hidden>
+          <span class="btn btn-sold-out">Currently sold out</span>
+          <p class="sold-out-text">I've received too many orders recently. To ensure quality reviews, I can't take on more audits until I finish the majority of my current ones.</p>
+          <a href="#" class="waitlist-link" data-waitlist target="_blank" rel="noopener noreferrer">Get notified when bookings reopen →</a>
+        </div>
       </div>
     </section>
 
@@ -884,8 +939,9 @@
       <div class="footer-cta">
         <h2>Ready to grow?</h2>
         <p class="footer-promo" id="footer-promo" hidden>Launch offer: <strong>25% off</strong> with code <span class="promo-code" data-promo-code></span></p>
-        <p>Book your personal channel audit and get feedback you can act on today.</p>
+        <p id="footer-cta-text">Book your personal channel audit and get feedback you can act on today.</p>
         <a href="#" class="btn" data-stripe>Book Your Audit</a>
+        <p class="sold-out-text" id="footer-sold-out-note" hidden>Bookings are temporarily closed. <a href="#" class="waitlist-link" data-waitlist target="_blank" rel="noopener noreferrer">Join the waitlist</a> to get notified when spots reopen.</p>
       </div>
       <p class="disclaimer">No growth results are guaranteed. This audit provides personalized feedback and guidance — outcomes depend on your own execution and consistency.</p>
       <p class="footer-contact">Questions? Email <a href="mailto:monomotime@gmail.com" data-contact-email>monomotime@gmail.com</a></p>
@@ -900,30 +956,55 @@
 
   <script>
     var CONFIG = {
+      BOOKING: {
+        open: false,
+        waitlistUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdFKksBGIGlf15Ywxjm8HmNWaYaNSq_uYefW7IB0Ales6EBFA/viewform'
+      },
       STRIPE_URL: 'https://buy.stripe.com/dRmeVe1yc5K4frR4dc6J200',
       CONTACT_EMAIL: 'monomotime@gmail.com',
       PROMO: {
-        active: true,
+        active: false,
         code: 'LAUNCH25'
       }
     };
-
-    document.querySelectorAll('[data-stripe]').forEach(function (el) {
-      el.href = CONFIG.STRIPE_URL;
-    });
 
     document.querySelectorAll('[data-contact-email]').forEach(function (el) {
       el.href = 'mailto:' + CONFIG.CONTACT_EMAIL;
       el.textContent = CONFIG.CONTACT_EMAIL;
     });
 
-    if (CONFIG.PROMO && CONFIG.PROMO.active === true) {
-      document.getElementById('promo-bar').hidden = false;
-      document.getElementById('hero-promo').hidden = false;
-      document.getElementById('hero-promo-note').hidden = false;
-      document.getElementById('footer-promo').hidden = false;
-      document.querySelectorAll('[data-promo-code]').forEach(function (el) {
-        el.textContent = CONFIG.PROMO.code;
+    if (CONFIG.BOOKING && CONFIG.BOOKING.open === true) {
+      document.querySelectorAll('[data-stripe]').forEach(function (el) {
+        el.href = CONFIG.STRIPE_URL;
+      });
+
+      if (CONFIG.PROMO && CONFIG.PROMO.active === true) {
+        document.getElementById('promo-bar').hidden = false;
+        document.getElementById('hero-promo').hidden = false;
+        document.getElementById('hero-promo-note').hidden = false;
+        document.getElementById('footer-promo').hidden = false;
+        document.querySelectorAll('[data-promo-code]').forEach(function (el) {
+          el.textContent = CONFIG.PROMO.code;
+        });
+      }
+    } else {
+      document.getElementById('booking-open').hidden = true;
+      document.getElementById('sold-out-block').hidden = false;
+      document.getElementById('footer-cta-text').hidden = true;
+      document.getElementById('footer-sold-out-note').hidden = false;
+
+      document.querySelectorAll('[data-stripe]').forEach(function (el) {
+        el.textContent = 'Currently sold out';
+        el.classList.add('btn-sold-out');
+        el.removeAttribute('href');
+        el.setAttribute('aria-disabled', 'true');
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+        });
+      });
+
+      document.querySelectorAll('[data-waitlist]').forEach(function (el) {
+        el.href = CONFIG.BOOKING.waitlistUrl;
       });
     }
 
